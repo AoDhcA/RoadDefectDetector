@@ -70,7 +70,7 @@ python main_window.py
 - best.pt – (not included) pre-trained model.
 
 ### License
-TThis project is distributed under the Apache 2.0 License. ee the [LICENSE](LICENSE.md) file for details.
+TThis project is distributed under the Apache 2.0 License. ee the [LICENSE]([LICENSE.md](https://github.com/AoDhcA/RoadDefectDetector?tab=Apache-2.0-1-ov-file)) file for details.
 
 ### Acknowledgments
 - Built with [Ultralytics YOLO](https://github.com/ultralytics/ultralytics).
