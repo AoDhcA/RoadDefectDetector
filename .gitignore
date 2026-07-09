@@ -1,0 +1,17 @@
+# PyTorch models
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+app.log
