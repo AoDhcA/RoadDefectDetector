@@ -32,7 +32,7 @@ pip install -r requirements.txt
 ```
 ## Getting the Model
 
-This repository does **not** include the pre‑trained model file `best.pt` because of its size (208 MB).
+This repository does **not** include the pre‑trained model file `best.pt` because of its size (208 MB). I do not recommend using this file, as it is currently of extremely questionable quality. However, you can download it using the link below as an example.
 
 Download the model from Google Drive:  
 [Download best.pt](https://drive.google.com/file/d/16-1jIjH9n-3GtGhWBkgF5IF4NK956dAK/view?usp=sharing)
