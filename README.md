@@ -73,6 +73,10 @@ python main_window.py
 TThis project is distributed under the Apache 2.0 License. ee the [LICENSE](https://github.com/AoDhcA/RoadDefectDetector?tab=Apache-2.0-1-ov-file) file for details.
 
 ### Acknowledgments
-- Built with [Ultralytics YOLO](https://github.com/ultralytics/ultralytics).
 
-- GUI framework: [PyQt5](https://www.riverbankcomputing.com/software/pyqt/).
+- Built with [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) (AGPL-3.0).
+- GUI framework: [PyQt5](https://www.riverbankcomputing.com/software/pyqt/) (GPL v3).
+- Computer vision: [OpenCV](https://opencv.org/) (Apache 2.0).
+- Image processing: [Pillow](https://python-pillow.org/) (MIT-CMU).
+- Numerical operations: [NumPy](https://numpy.org/) (BSD-3-Clause).
+
