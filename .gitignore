@@ -15,3 +15,5 @@ __pycache__/
 # Logs
 *.log
 app.log
+
+settings.json

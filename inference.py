@@ -2,16 +2,17 @@ import torch
 import numpy as np
 import cv2
 from ultralytics import YOLO
+import hashlib
+from settings import SettingsManager
 
-CLASS_NAMES_RU = {
-    'crack': 'Трещина',
-    'alligator crack': 'Сетка трещин',
-    'Pothole': 'Выбоина',
-    'manhole': 'Люк',
-    'patch': 'Заплатка',
-    'storm drain': 'Ливневая канализация',
-    'expansion joint': 'Деформационный шов',
-}
+# Вычисляет BLAKE2b хеш-сумму файла
+def compute_blake2b(filepath: str) -> str:
+    hash_blake2b = hashlib.blake2b()
+    with open(filepath, 'rb') as f:
+        for chunk in iter(lambda: f.read(8192), b''):
+            hash_blake2b.update(chunk)
+    return hash_blake2b.hexdigest()
+
 
 # Обёртка над YOLOv8-seg для инференса.
 class DefectDetector:
@@ -27,7 +28,7 @@ class DefectDetector:
     }
 
     def __init__(self, model_path: str = 'best.pt', conf: float = 0.5,
-                 tile_size: int = 1024, tile_overlap: int = 300):
+             tile_size: int = 1024, tile_overlap: int = 300):
         self.conf = conf
         self.device = self._select_device()
         print(f"[INFO] Выбрано устройство: {self.device}")
@@ -35,6 +36,28 @@ class DefectDetector:
         self.model = YOLO(model_path)
         self.tile_size = tile_size
         self.tile_overlap = tile_overlap
+
+        # Вычисляет хеш модели
+        self.model_hash = compute_blake2b(model_path)
+        print(f"[INFO] Хеш модели: {self.model_hash[:16]}...")  # сокращённо для лога
+
+        # Создаёт менеджер настроек
+        self.settings = SettingsManager()
+
+        # Кэширует кастомные имена и цвета
+        self._custom_names = {}
+        self._custom_colors = {}
+        self._load_custom_settings()
+
+    # Загружает кастомные имена и цвета из настроек для текущей модели.
+    def _load_custom_settings(self):
+        class_configs = self.settings.get_all_classes_for_model(self.model_hash)
+        for class_id_str, config in class_configs.items():
+            class_id = int(class_id_str)
+            if "name" in config:
+                self._custom_names[class_id] = config["name"]
+            if "color" in config:
+                self._custom_colors[class_id] = config["color"]
 
     def _select_device(self) -> str:
         # 1. Intel XPU
@@ -182,11 +205,29 @@ class DefectDetector:
         return detections
 
     # Вспомогательные методы
+    # Возвращает цвет класса (кастомный, если задан)
     def get_class_color(self, class_id: int):
+        
+        if class_id in self._custom_colors:
+            return self._custom_colors[class_id]
         return self.CLASS_COLORS.get(class_id, (255, 255, 255))
 
-    def set_class_color(self, class_id: int, color: tuple):
-        self.CLASS_COLORS[class_id] = color
+    # Устанавливает кастомный цвет класса и сохраняет в настройки
+    def set_class_color(self, class_id: int, color_bgr: tuple):
+        
+        self._custom_colors[class_id] = color_bgr
+        self.settings.set_class_config(self.model_hash, class_id, color_bgr=color_bgr)
+
+    # Возвращает отображаемое имя класса (кастомное, если задано)
+    def get_class_display_name(self, class_id: int) -> str:
+        if class_id in self._custom_names:
+            return self._custom_names[class_id]
+        return self.model.names.get(class_id, str(class_id))
+
+    # Устанавливает кастомное имя класса и сохраняет в настройки
+    def set_class_display_name(self, class_id: int, name: str):
+        self._custom_names[class_id] = name
+        self.settings.set_class_config(self.model_hash, class_id, name=name)
 
     def get_all_class_info(self):
         result = []
@@ -197,7 +238,7 @@ class DefectDetector:
         return result
     
     # Объединяет контуры одного класса, находящиеся ближе distance_threshold пикселей
-    # и озвращает новый список детекций с объединёнными контурами
+    # и возвращает новый список детекций с объединёнными контурами
     def merge_close_contours(self, detections, image_shape, distance_threshold=20):
 
         if not detections:
@@ -231,8 +272,6 @@ class DefectDetector:
                 area = cv2.contourArea(cnt)
                 bbox = cv2.boundingRect(cnt)
                 merged.append({
-                    'class_id': cls,
-                    #'class_name': self.model.names[cls],
                     'class_name': self.get_class_display_name(cls),
                     'contour': cnt,
                     'area': area,
@@ -241,6 +280,3 @@ class DefectDetector:
                 })
         return merged
     
-    def get_class_display_name(self, class_id: int) -> str:
-        eng_name = self.model.names[class_id]
-        return CLASS_NAMES_RU.get(eng_name, eng_name)

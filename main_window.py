@@ -177,7 +177,7 @@ class MainWindow(QMainWindow):
             color = self.detector.get_class_color(det['class_id'])
             cv2.drawContours(overlay, [det['contour']], -1, color, cv2.FILLED)
             cv2.drawContours(result, [det['contour']], -1, color, 2)
-            x, y, w, h = det['bbox']
+            x, y, w, h = det['bbox'] # Исправить.
             label = self.detector.get_class_display_name(det['class_id'])
             label_y = max(y-5, 20)  # чтобы не выходить за верхнюю границу
             result = draw_text_pil(result, label, (x, y), color, font_size=18, outside_box=True)
@@ -366,7 +366,7 @@ class MainWindow(QMainWindow):
             color = self.detector.get_class_color(det['class_id'])
             cv2.drawContours(overlay, [det['contour']], -1, color, cv2.FILLED)
             cv2.drawContours(result, [det['contour']], -1, color, 2)
-            x, y, w, h = det['bbox']
+            x, y, w, h = det['bbox'] # Исправить.
             label = self.detector.get_class_display_name(det['class_id'])
             label_y = max(y-5, 20)  # чтобы не выходить за верхнюю границу
             result = draw_text_pil(result, label, (x, y), color, font_size=18, outside_box=True)

@@ -18,8 +18,8 @@ def save_annotated_image(image: np.ndarray, detections: list, output_path: str, 
         cv2.drawContours(result, [det['contour']], -1, color, 2)
         # Подпись
         x, y, w, h = det['bbox']
-        label = det['class_name']   # уже должно быть русским после правок в predict
-        label_y = max(y-5, 20)      # чтобы не уехать за верхнюю границу
+        label = det['class_name']
+        label_y = max(y-5, 20) # Исправить.
         result = draw_text_pil(result, label, (x, y), color, font_size=18, outside_box=True)
     alpha = 0.4
     cv2.addWeighted(overlay, alpha, result, 1 - alpha, 0, result)
