@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QFileDialog, QVBoxLayout, QHBoxLayout, QWidget,
     QScrollArea, QListWidget, QListWidgetItem,
     QProgressBar, QMessageBox, QAbstractItemView,
-    QMenuBar, QAction, QColorDialog, QSplitter
+    QMenuBar, QAction, QSplitter, QDialog 
 )
 from PyQt5.QtGui import QPixmap, QImage, QColor, QIcon
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize
@@ -16,6 +16,7 @@ from PIL import Image
 
 from inference import DefectDetector
 from export_utils import save_annotated_image, save_json_report, save_csv_report, draw_text_pil
+from class_settings_dialog import ClassSettingsDialog
 
 import logging
 
@@ -130,41 +131,13 @@ class MainWindow(QMainWindow):
 
         # Меню классов
         self.class_menu = menubar.addMenu("Классы")
-        self._rebuild_class_menu()
+        act_settings = QAction("Настройки классов", self)
+        act_settings.triggered.connect(self.open_class_settings)
+        self.class_menu.addAction(act_settings)
 
         # По умолчанию экспорт отключён для исколючения ошибок
         self._enable_single_export(False)
         self._enable_folder_export(False)
-
-    def _rebuild_class_menu(self):
-        # Создание пунктов меню с текущими цветами классов
-        self.class_menu.clear()
-        for class_id, name, color_bgr in self.detector.get_all_class_info():
-            # Создание иконки 16x16
-            r, g, b = color_bgr[2], color_bgr[1], color_bgr[0]  # из BGR в RGB
-            pixmap = QPixmap(16, 16)
-            pixmap.fill(QColor(r, g, b))
-            icon = QIcon(pixmap)
-
-            action = QAction(icon, f"{name} (ID {class_id})", self)
-            action.setData(class_id)  # Сохранение class_id внутри action
-            action.triggered.connect(self._on_change_class_color)
-            self.class_menu.addAction(action)
-
-
-    def _on_change_class_color(self):
-        action = self.sender()
-        class_id = action.data()
-        current_bgr = self.detector.get_class_color(class_id)
-        init_color = QColor(current_bgr[2], current_bgr[1], current_bgr[0])
-        color = QColorDialog.getColor(init_color, self, "Выберите цвет для класса")
-        if color.isValid():
-            new_bgr = (color.blue(), color.green(), color.red())
-            self.detector.set_class_color(class_id, new_bgr)
-            # Обновление меню
-            self._rebuild_class_menu()
-            if self.processed_image is not None and self.last_detections is not None:
-                self._redraw_current_result()
 
     # Перерисовывает processed_image с новыми цветами
     def _redraw_current_result(self):
@@ -569,7 +542,16 @@ class MainWindow(QMainWindow):
             self.btn_original.setEnabled(True)
         else:
             self.btn_original.setEnabled(False)
-    
+
+    # Открывает диалог настройки классов.
+    def open_class_settings(self):
+        
+        dlg = ClassSettingsDialog(self.detector, self)
+        if dlg.exec_() == QDialog.Accepted:
+            # Если есть обработанное изображение то перерисовывает с новыми настройками
+            if self.processed_image is not None and self.last_detections is not None:
+                self._redraw_current_result()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
