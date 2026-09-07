@@ -272,6 +272,7 @@ class DefectDetector:
                 area = cv2.contourArea(cnt)
                 bbox = cv2.boundingRect(cnt)
                 merged.append({
+                    'class_id': cls,
                     'class_name': self.get_class_display_name(cls),
                     'contour': cnt,
                     'area': area,

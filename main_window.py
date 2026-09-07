@@ -130,10 +130,13 @@ class MainWindow(QMainWindow):
         self.export_folder_menu.addAction(act_f_csv)
 
         # Меню классов
-        self.class_menu = menubar.addMenu("Классы")
+        # self.class_menu = menubar.addMenu("Классы")
+        # act_settings = QAction("Настройки классов", self)
+        # act_settings.triggered.connect(self.open_class_settings)
+        # self.class_menu.addAction(act_settings)
         act_settings = QAction("Настройки классов", self)
         act_settings.triggered.connect(self.open_class_settings)
-        self.class_menu.addAction(act_settings)
+        menubar.addAction(act_settings)
 
         # По умолчанию экспорт отключён для исколючения ошибок
         self._enable_single_export(False)
@@ -349,6 +352,7 @@ class MainWindow(QMainWindow):
         self._update_item_status(self.current_image_path)
         logger.info(f"Обработка завершена, найдено {len(detections)} объектов")
         QMessageBox.information(self, "Готово", f"Найдено объектов: {len(detections)}")
+
 
     def _update_item_status(self, path):
         for i in range(self.file_list.count()):
