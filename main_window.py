@@ -81,6 +81,12 @@ class MainWindow(QMainWindow):
     def _setup_menubar(self):
         menubar = self.menuBar()
 
+        # Меню Модель
+        model_menu = menubar.addMenu("Модель")
+        act_load_model = QAction("Загрузить модель...", self)
+        act_load_model.triggered.connect(self.load_model)
+        model_menu.addAction(act_load_model)
+
         # Меню Файл 
         file_menu = menubar.addMenu("Файл")
         act_open_img = QAction("Открыть изображение", self)
@@ -555,6 +561,45 @@ class MainWindow(QMainWindow):
             # Если есть обработанное изображение то перерисовывает с новыми настройками
             if self.processed_image is not None and self.last_detections is not None:
                 self._redraw_current_result()
+
+    # Загружает новую модель YOLO-seg из файла .pt
+    def load_model(self):
+        
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Выберите файл модели YOLO", "",
+            "PyTorch models (*.pt);;All files (*.*)"
+        )
+        if not file_path:
+            return
+
+        try:
+            # Пытаеnbz создать новый детектор с указанной моделью
+            new_detector = DefectDetector(
+                model_path=file_path,
+                conf=self.detector.conf,
+                tile_size=self.detector.tile_size,
+                tile_overlap=self.detector.tile_overlap
+            )
+            # Заменяет текущий детектор
+            self.detector = new_detector
+
+            # Очистка всех результатов
+            self._clear_all()
+
+            # Обновление меню классов
+
+            QMessageBox.information(
+                self, "Успех",
+                f"Модель загружена: {Path(file_path).name}\n"
+                f"Классов: {len(self.detector.model.names)}"
+            )
+            logger.info(f"Загружена новая модель: {file_path}")
+        except Exception as e:
+            QMessageBox.critical(
+               self, "Ошибка",
+                f"Не удалось загрузить модель:\n{str(e)}"
+            )
+            logger.error(f"Ошибка загрузки модели {file_path}: {e}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
