@@ -621,13 +621,6 @@ class MainWindow(QMainWindow):
             path = dlg.selected_path()
             if path:
                 self._load_model_from_path(path)
-        else:
-            # Если пользователь отказался то приложение закроется
-            QMessageBox.warning(
-                self, "Модель не выбрана",
-                "Без модели работа невозможна. Программа будет закрыта."
-            )
-            self.close()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

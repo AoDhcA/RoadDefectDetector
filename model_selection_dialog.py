@@ -36,9 +36,11 @@ class ModelSelectionDialog(QDialog):
         layout.addLayout(browse_layout)
 
         # OK / Cancel
-        btn_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        btn_box.accepted.connect(self.accept)
-        btn_box.rejected.connect(self.reject)
+        btn_box = QDialogButtonBox()
+        btn_ok = btn_box.addButton("Выбрать", QDialogButtonBox.AcceptRole)
+        btn_exit = btn_box.addButton("Выход", QDialogButtonBox.RejectRole)
+        btn_ok.clicked.connect(self.accept)
+        btn_exit.clicked.connect(self._exit_app)
         layout.addWidget(btn_box)
 
     # Заполняет список недавними моделями.
@@ -86,3 +88,17 @@ class ModelSelectionDialog(QDialog):
 
     def selected_path(self):
         return self._selected_path
+
+    # Блокирует закрытие по Escape и по кнопке X.
+    def reject(self):
+        pass
+
+    # Блокирует закрытие через крестик в заголовке окна.
+    def closeEvent(self, event):
+        event.ignore()
+
+    # Завершает работу приложения.
+    def _exit_app(self):
+        
+        from PyQt5.QtWidgets import QApplication
+        QApplication.quit()
