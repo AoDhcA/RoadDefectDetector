@@ -4,12 +4,12 @@ from pathlib import Path
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QLabel, QPushButton,
     QFileDialog, QVBoxLayout, QHBoxLayout, QWidget,
-    QScrollArea, QListWidget, QListWidgetItem,
+    QListWidget, QListWidgetItem,# QScrollArea,
     QProgressBar, QMessageBox, QAbstractItemView,
-    QMenuBar, QAction, QSplitter, QDialog 
+    QAction, QSplitter, QDialog #QMenuBar,
 )
-from PyQt5.QtGui import QPixmap, QImage, QColor, QIcon
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize, QTimer
+from PyQt5.QtGui import QPixmap, QImage#,  QColor, QIcon
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer # QSize,
 import cv2
 import logging
 import numpy as np
@@ -147,10 +147,6 @@ class MainWindow(QMainWindow):
         self.export_folder_menu.addAction(act_f_csv)
 
         # Меню классов
-        # self.class_menu = menubar.addMenu("Классы")
-        # act_settings = QAction("Настройки классов", self)
-        # act_settings.triggered.connect(self.open_class_settings)
-        # self.class_menu.addAction(act_settings)
         act_settings = QAction("Настройки классов", self)
         act_settings.triggered.connect(self.open_class_settings)
         menubar.addAction(act_settings)
@@ -572,45 +568,6 @@ class MainWindow(QMainWindow):
             # Если есть обработанное изображение то перерисовывает с новыми настройками
             if self.processed_image is not None and self.last_detections is not None:
                 self._redraw_current_result()
-
-    # Загружает новую модель YOLO-seg из файла .pt
-    # def load_model(self):
-        
-    #     file_path, _ = QFileDialog.getOpenFileName(
-    #         self, "Выберите файл модели YOLO", "",
-    #         "PyTorch models (*.pt);;All files (*.*)"
-    #     )
-    #     if not file_path:
-    #         return
-
-    #     try:
-    #         # Пытаеnbz создать новый детектор с указанной моделью
-    #         new_detector = DefectDetector(
-    #             model_path=file_path,
-    #             conf=self.detector.conf,
-    #             tile_size=self.detector.tile_size,
-    #             tile_overlap=self.detector.tile_overlap
-    #         )
-    #         # Заменяет текущий детектор
-    #         self.detector = new_detector
-
-    #         # Очистка всех результатов
-    #         self._clear_all()
-
-    #         # Обновление меню классов
-
-    #         QMessageBox.information(
-    #             self, "Успех",
-    #             f"Модель загружена: {Path(file_path).name}\n"
-    #             f"Классов: {len(self.detector.model.names)}"
-    #         )
-    #         logger.info(f"Загружена новая модель: {file_path}")
-    #     except Exception as e:
-    #         QMessageBox.critical(
-    #            self, "Ошибка",
-    #             f"Не удалось загрузить модель:\n{str(e)}"
-    #         )
-    #         logger.error(f"Ошибка загрузки модели {file_path}: {e}")
 
     # Пункт меню "Загрузить модель", открывает диалог выбора
     def load_model(self):
