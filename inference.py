@@ -27,8 +27,31 @@ class DefectDetector:
         6: (128, 128, 128),# expansion joint – серый
     }
 
-    def __init__(self, model_path: str = 'best.pt', conf: float = 0.5,
-             tile_size: int = 1024, tile_overlap: int = 300):
+    # def __init__(self, model_path: str = 'best.pt', conf: float = 0.5,
+    #          tile_size: int = 1024, tile_overlap: int = 300):
+    #     self.conf = conf
+    #     self.device = self._select_device()
+    #     print(f"[INFO] Выбрано устройство: {self.device}")
+
+    #     self.model = YOLO(model_path)
+    #     self.tile_size = tile_size
+    #     self.tile_overlap = tile_overlap
+
+    #     # Вычисляет хеш модели
+    #     self.model_hash = compute_blake2b(model_path)
+    #     print(f"[INFO] Хеш модели: {self.model_hash[:16]}...")  # сокращённо для лога
+
+    #     # Создаёт менеджер настроек
+    #     self.settings = SettingsManager()
+
+    #     
+    #     self._custom_names = {}
+    #     self._custom_colors = {}
+    #     self._load_custom_settings()
+
+    def __init__(self, model_path: str, conf: float = 0.5,
+             tile_size: int = 1024, tile_overlap: int = 300,
+             settings: SettingsManager = None):
         self.conf = conf
         self.device = self._select_device()
         print(f"[INFO] Выбрано устройство: {self.device}")
@@ -39,15 +62,16 @@ class DefectDetector:
 
         # Вычисляет хеш модели
         self.model_hash = compute_blake2b(model_path)
-        print(f"[INFO] Хеш модели: {self.model_hash[:16]}...")  # сокращённо для лога
+        print(f"[INFO] Хеш модели: {self.model_hash[:16]}...")
 
-        # Создаёт менеджер настроек
-        self.settings = SettingsManager()
+        # Использует переданный settings иначе создаёт новый
+        self.settings = settings if settings is not None else SettingsManager()
 
         # Кэширует кастомные имена и цвета
         self._custom_names = {}
         self._custom_colors = {}
         self._load_custom_settings()
+
 
     # Загружает кастомные имена и цвета из настроек для текущей модели.
     def _load_custom_settings(self):

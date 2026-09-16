@@ -9,16 +9,18 @@ from PyQt5.QtWidgets import (
     QMenuBar, QAction, QSplitter, QDialog 
 )
 from PyQt5.QtGui import QPixmap, QImage, QColor, QIcon
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize, QTimer
 import cv2
+import logging
 import numpy as np
 from PIL import Image
 
 from inference import DefectDetector
 from export_utils import save_annotated_image, save_json_report, save_csv_report, draw_text_pil
 from class_settings_dialog import ClassSettingsDialog
+from settings import SettingsManager
+from model_selection_dialog import ModelSelectionDialog
 
-import logging
 
 logging.basicConfig(
     filename='app.log',
@@ -62,7 +64,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Определение дефектов дорожного полотна с помощью компьютерного зрения")
         self.setMinimumSize(1200, 700)
 
-        self.detector = DefectDetector(model_path='best.pt', tile_size=1024, tile_overlap=200)
+        # Менеджер настроек
+        self.settings = SettingsManager()
+        self.detector = None
 
         # Состояния
         self.original_image = None
@@ -77,15 +81,16 @@ class MainWindow(QMainWindow):
         self._setup_menubar()
         self._setup_ui()
 
+        # блокировка экспорта
+        self._enable_single_export(False)
+        self._enable_folder_export(False)
+
+        # Вызов диалога
+        QTimer.singleShot(0, self.prompt_model_selection)
+
     # Меню-бар
     def _setup_menubar(self):
         menubar = self.menuBar()
-
-        # Меню Модель
-        model_menu = menubar.addMenu("Модель")
-        act_load_model = QAction("Загрузить модель...", self)
-        act_load_model.triggered.connect(self.load_model)
-        model_menu.addAction(act_load_model)
 
         # Меню Файл 
         file_menu = menubar.addMenu("Файл")
@@ -99,6 +104,12 @@ class MainWindow(QMainWindow):
         act_exit = QAction("Выход", self)
         act_exit.triggered.connect(self.close)
         file_menu.addAction(act_exit)
+
+        # Меню Модель
+        model_menu = menubar.addMenu("Модель")
+        act_load_model = QAction("Загрузить модель...", self)
+        act_load_model.triggered.connect(self.load_model)
+        model_menu.addAction(act_load_model)
 
         # Меню обработка
         proc_menu = menubar.addMenu("Обработка")
@@ -563,43 +574,103 @@ class MainWindow(QMainWindow):
                 self._redraw_current_result()
 
     # Загружает новую модель YOLO-seg из файла .pt
-    def load_model(self):
+    # def load_model(self):
         
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Выберите файл модели YOLO", "",
-            "PyTorch models (*.pt);;All files (*.*)"
-        )
-        if not file_path:
-            return
+    #     file_path, _ = QFileDialog.getOpenFileName(
+    #         self, "Выберите файл модели YOLO", "",
+    #         "PyTorch models (*.pt);;All files (*.*)"
+    #     )
+    #     if not file_path:
+    #         return
+
+    #     try:
+    #         # Пытаеnbz создать новый детектор с указанной моделью
+    #         new_detector = DefectDetector(
+    #             model_path=file_path,
+    #             conf=self.detector.conf,
+    #             tile_size=self.detector.tile_size,
+    #             tile_overlap=self.detector.tile_overlap
+    #         )
+    #         # Заменяет текущий детектор
+    #         self.detector = new_detector
+
+    #         # Очистка всех результатов
+    #         self._clear_all()
+
+    #         # Обновление меню классов
+
+    #         QMessageBox.information(
+    #             self, "Успех",
+    #             f"Модель загружена: {Path(file_path).name}\n"
+    #             f"Классов: {len(self.detector.model.names)}"
+    #         )
+    #         logger.info(f"Загружена новая модель: {file_path}")
+    #     except Exception as e:
+    #         QMessageBox.critical(
+    #            self, "Ошибка",
+    #             f"Не удалось загрузить модель:\n{str(e)}"
+    #         )
+    #         logger.error(f"Ошибка загрузки модели {file_path}: {e}")
+
+    # Пункт меню "Загрузить модель", открывает диалог выбора
+    def load_model(self):
+        dlg = ModelSelectionDialog(self.settings, self)
+        if dlg.exec_() == QDialog.Accepted:
+            path = dlg.selected_path()
+            if path:
+                self._load_model_from_path(path, confirm=True)
+
+    # Загружает модель по указанному пути с подтверждением, если есть результаты
+    def _load_model_from_path(self, path: str, confirm: bool = True):
+        # Подтверждение, если есть несохранённые результаты
+        if confirm and self.detector is not None and self.all_results:
+            reply = QMessageBox.question(
+                self, "Подтверждение",
+                "Все текущие результаты обработки будут потеряны.\n"
+                "Продолжить загрузку новой модели?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            if reply != QMessageBox.Yes:
+                return
 
         try:
-            # Пытаеnbz создать новый детектор с указанной моделью
             new_detector = DefectDetector(
-                model_path=file_path,
-                conf=self.detector.conf,
-                tile_size=self.detector.tile_size,
-                tile_overlap=self.detector.tile_overlap
+                model_path=path,
+                conf=self.detector.conf if self.detector else 0.5,
+                tile_size=self.detector.tile_size if self.detector else 1024,
+                tile_overlap=self.detector.tile_overlap if self.detector else 200,
+                settings=self.settings
             )
-            # Заменяет текущий детектор
             self.detector = new_detector
-
-            # Очистка всех результатов
+            # Сохраняет в историю
+            self.settings.add_recent_model(path, new_detector.model_hash, Path(path).stem)
+            # Очищает результаты
             self._clear_all()
-
-            # Обновление меню классов
-
             QMessageBox.information(
                 self, "Успех",
-                f"Модель загружена: {Path(file_path).name}\n"
+                f"Модель загружена: {Path(path).name}\n"
                 f"Классов: {len(self.detector.model.names)}"
             )
-            logger.info(f"Загружена новая модель: {file_path}")
+            logger.info(f"Загружена новая модель: {path}")
         except Exception as e:
-            QMessageBox.critical(
-               self, "Ошибка",
-                f"Не удалось загрузить модель:\n{str(e)}"
+            QMessageBox.critical(self, "Ошибка", f"Не удалось загрузить модель:\n{e}")
+            logger.error(f"Ошибка загрузки модели {path}: {e}")
+
+    # Показывает диалог выбора модели при старте
+    def prompt_model_selection(self):
+        dlg = ModelSelectionDialog(self.settings, self)
+        if dlg.exec_() == QDialog.Accepted:
+            path = dlg.selected_path()
+            if path:
+                self._load_model_from_path(path)
+        else:
+            # Если пользователь отказался то приложение закроется
+            QMessageBox.warning(
+                self, "Модель не выбрана",
+                "Без модели работа невозможна. Программа будет закрыта."
             )
-            logger.error(f"Ошибка загрузки модели {file_path}: {e}")
+            self.close()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

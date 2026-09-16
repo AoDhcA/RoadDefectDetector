@@ -47,3 +47,30 @@ class SettingsManager:
     # Возвращает словарь {class_id: {"name": ..., "color": ...}} для всех сохранённых классов указанной модели. Если модели нет, возвращает {}
     def get_all_classes_for_model(self, model_hash: str):
         return self.data.get(model_hash, {})
+
+    # Возвращает список недавно использованных моделей.
+    def get_recent_models(self):
+        return self.data.get("recent_models", [])
+
+    # Добавляет модель в начало списка недавних (без дубликатов по хешу).
+    def add_recent_model(self, path: str, model_hash: str, display_name: str):
+        recent = self.data.get("recent_models", [])
+        # Удаляет запись с таким же хешем
+        recent = [m for m in recent if m.get("hash") != model_hash]
+        # Добавляет запись в начало
+        recent.insert(0, {
+            "path": str(path),
+            "hash": model_hash,
+            "display_name": display_name
+        })
+        # Ограничение истории 10 записями
+        recent = recent[:10]
+        self.data["recent_models"] = recent
+        self.save()
+
+    # Удаляет модель из истории по хешу.
+    def remove_recent_model(self, model_hash: str):
+        recent = self.data.get("recent_models", [])
+        recent = [m for m in recent if m.get("hash") != model_hash]
+        self.data["recent_models"] = recent
+        self.save()
