@@ -5,6 +5,12 @@ from ultralytics import YOLO
 import hashlib
 from settings import SettingsManager
 
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass
+
 # Вычисляет BLAKE2b хеш-сумму файла
 def compute_blake2b(filepath: str) -> str:
     hash_blake2b = hashlib.blake2b()
@@ -12,7 +18,6 @@ def compute_blake2b(filepath: str) -> str:
         for chunk in iter(lambda: f.read(8192), b''):
             hash_blake2b.update(chunk)
     return hash_blake2b.hexdigest()
-
 
 # Обёртка над YOLOv8-seg для инференса.
 class DefectDetector:

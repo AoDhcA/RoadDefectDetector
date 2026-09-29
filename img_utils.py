@@ -67,7 +67,7 @@ def save_csv_report(detections: list, output_path: str, class_names: dict = None
 
 
 def draw_text_pil(img_bgr, text, position, color_bgr, font_size=18, outside_box=False):
-    # BGR → RGB
+    # BGR в RGB
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
     pil_img = Image.fromarray(img_rgb)
     draw = ImageDraw.Draw(pil_img)
@@ -94,3 +94,23 @@ def draw_text_pil(img_bgr, text, position, color_bgr, font_size=18, outside_box=
     # Обратно в OpenCV BGR
     result = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     return result
+
+# Загружает изображение любого поддерживаемого формата в BGR-массив OpenCV
+def load_image_cv(path: str):
+        try:
+            pil_img = Image.open(path)
+            # Конвертирует в RGB
+            if pil_img.mode != 'RGB':
+                pil_img = pil_img.convert('RGB')
+            img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+            return img
+        except Exception:
+            # Если PIL не справился, то через OpenCV (для не HEIC/HEIF)
+            try:
+                img_array = np.fromfile(path, dtype=np.uint8)
+                img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+                if img is not None:
+                    return img
+            except Exception:
+                pass
+            return None 

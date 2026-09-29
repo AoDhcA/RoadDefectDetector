@@ -16,7 +16,7 @@ import numpy as np
 from PIL import Image
 
 from inference import DefectDetector
-from export_utils import save_annotated_image, save_json_report, save_csv_report, draw_text_pil
+from img_utils import save_annotated_image, save_json_report, save_csv_report, draw_text_pil, load_image_cv
 from class_settings_dialog import ClassSettingsDialog
 from settings import SettingsManager
 from model_selection_dialog import ModelSelectionDialog
@@ -40,13 +40,12 @@ class InferenceThread(QThread):
         super().__init__()
         self.image_paths = image_paths
         self.detector = detector
-        self.detect_func = detect_func
-        
+        self.detect_func = detect_func       
 
     def run(self):
         results = []
         for idx, path in enumerate(self.image_paths):
-            img = cv2.imread(path)
+            img = load_image_cv(path)
             if img is None:
                 results.append((path, []))
                 self.progress.emit(idx + 1, f"Ошибка загрузки: {Path(path).name}")
@@ -246,7 +245,7 @@ class MainWindow(QMainWindow):
     def load_image(self):
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Выберите изображение", "",
-            "Images (*.png *.jpg *.jpeg *.bmp)"
+            "Images (*.png *.jpg *.jpeg *.bmp *.heic *.heif);;All files (*.*)"
         )
         if not file_path:
             return
@@ -260,7 +259,7 @@ class MainWindow(QMainWindow):
         if not folder:
             return
         logger.info(f"Загружена папка: {folder}")
-        exts = ('.png', '.jpg', '.jpeg', '.bmp')
+        exts = ('.png', '.jpg', '.jpeg', '.bmp', '.heic', '.heif')
         files = [os.path.join(folder, f) for f in os.listdir(folder)
                  if f.lower().endswith(exts)]
         if not files:
@@ -412,7 +411,7 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
 
         for (path, detections) in results:
-            img = cv2.imread(path)
+            img = load_image_cv(path)
             if img is not None:
                 self.all_results[path] = (detections, img)
                 self._update_item_status(path)
@@ -474,7 +473,7 @@ class MainWindow(QMainWindow):
         if not out_dir:
             return
         for path, (dets, img) in self.all_results.items():
-            name = Path(path).name
+            name = Path(path).stem + ".png"
             save_annotated_image(img, dets, str(out_dir / name), self.detector)
         QMessageBox.information(self, "Экспорт папки", f"Изображения сохранены в:\n{out_dir}")
         logger.info(f"Папка экспортирована PNG: {out_dir}")
