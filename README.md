@@ -2,6 +2,13 @@
 
 A PyQt5-based desktop application for detecting road pavement defects using YOLOv8-seg neural network.
 
+<div align="center">
+  <img src="screenshots\processing.png" alt="processing.png" width="750"/>
+  <p align="center">Example of processing</p>
+  <img src="screenshots\exampleProcessedImage.png" alt="exampleProcessedImage.png" width="750"/>
+  <p align="center">Example of a processed image</p>
+</div>
+
 ## Features
 
 - Process single images or entire folders.
@@ -13,7 +20,16 @@ A PyQt5-based desktop application for detecting road pavement defects using YOLO
   - **CSV** (summary with bounding boxes and areas)
 - Batch export for all processed images.
 - Customizable class names and colors (persisted between sessions).
+
+<div align="center">
+  <img src="screenshots\exampleClassCastomDia.png" alt="exampleClassCastomDia.png" width="525"/>
+  <p align="center">Example class settings dialog</p>
+</div>
+
 - Load any YOLOv8-seg model (`.pt` file).
+- Model history for quick selection.
+- Support for common image formats including HEIC/HEIF (via `pillow-heif`).
+- Tiling mode for large images (can be toggled on/off).
 
 ## Requirements
 
@@ -46,6 +62,14 @@ Run the application:
 ```bash
 python main_window.py
 ```
+
+### Pre-built executable
+
+1. Download the ZIP archive from Releases.
+2. Unpack it to any folder.
+3. Run `RoadDefectDetector.exe`.
+4. Select the model file (`.pt`) in the dialog that appears.
+
 ### Main Workflow
 
 1. **Open image(s)** – use `File → Open Image` or `File → Open Folder`.
@@ -56,21 +80,26 @@ python main_window.py
 ### Customization
 
 - **Class names & colors** – go to `Classes → Class Settings`. In the dialog, you can rename any class and change its display color. Changes are saved automatically.
-- **Change model** – use `Model → Load Model...` to select another `.pt` YOLO‑seg model.
+- **Change model** – use `Model → Load Model...` to select another `.pt` YOLO‑seg model. Previously used models are stored in history.
+- **Tiling** – use `Process → Use Tiling` to toggle tiled processing for large images.
 
 ### File Structure
-- main_window.py – main GUI application.
+- `main_window.py` – main GUI application.
 
-- inference.py – YOLO detection wrapper with tiling and merging.
+- `inference.py` – YOLO detection wrapper with tiling and merging.
 
-- export_utils.py – utilities for saving annotated images, JSON, CSV.
+- `img_utils.py` – utilities for saving annotated images, JSON, CSV, and loading images (including HEIC/HEIF).
 
-- settings.py – persistent storage for user preferences (class names, colors).
+- `settings.py` – persistent storage for user preferences (class names, colors).
 
-- best.pt – (not included) pre-trained model.
+- `class_settings_dialog.py` – dialog for editing class names and colors.
+
+- `model_selection_dialog.py` – dialog for selecting a model at startup or from the menu.
+
+- `best.pt` – (not included) pre-trained model.
 
 ### License
-TThis project is distributed under the Apache 2.0 License. ee the [LICENSE](https://github.com/AoDhcA/RoadDefectDetector?tab=Apache-2.0-1-ov-file) file for details.
+This project is distributed under the Apache 2.0 License. ee the [LICENSE](https://github.com/AoDhcA/RoadDefectDetector?tab=Apache-2.0-1-ov-file) file for details.
 
 ### Acknowledgments
 
@@ -79,4 +108,5 @@ TThis project is distributed under the Apache 2.0 License. ee the [LICENSE](http
 - Computer vision: [OpenCV](https://opencv.org/) (Apache 2.0).
 - Image processing: [Pillow](https://python-pillow.org/) (MIT-CMU).
 - Numerical operations: [NumPy](https://numpy.org/) (BSD-3-Clause).
+- HEIC/HEIF support: [pillow-heif](https://github.com/bigcat88/pillow_heif) (BSD-3-Clause).
 

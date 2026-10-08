@@ -1,7 +1,7 @@
-import torch
+#import torch
 import numpy as np
 import cv2
-from ultralytics import YOLO
+# from ultralytics import YOLO
 import hashlib
 from settings import SettingsManager
 
@@ -35,6 +35,11 @@ class DefectDetector:
     def __init__(self, model_path: str, conf: float = 0.5,
              tile_size: int = 1024, tile_overlap: int = 300,
              settings: SettingsManager = None):
+        
+        import torch
+        self._torch = torch
+        from ultralytics import YOLO
+
         self.conf = conf
         self.device = self._select_device()
         print(f"[INFO] Выбрано устройство: {self.device}")
@@ -68,6 +73,7 @@ class DefectDetector:
 
     def _select_device(self) -> str:
         # 1. Intel XPU
+        torch = self._torch
         try:
             if hasattr(torch, 'xpu') and torch.xpu.is_available():
                 _ = torch.zeros(1, device=torch.device('xpu'))
@@ -86,6 +92,7 @@ class DefectDetector:
     # Подменяет select_device, чтобы 'xpu' не вызывал ошибку.
     def _patch_predictor_for_xpu(self):
         import ultralytics.engine.predictor as predictor
+        torch = self._torch
         original = predictor.select_device
 
         def patched(device='', batch=0, **kwargs):

@@ -1,0 +1,8 @@
+numpy==2.5.3
+opencv_python==4.11.0.86
+Pillow==12.3.0
+pillow_heif==1.8.0
+PyQt5==5.15.11
+pyqt5_sip==12.18.0
+torch==2.8.0+xpu
+ultralytics==8.4.46
